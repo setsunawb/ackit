@@ -1,4 +1,4 @@
-package ackitgo
+package ackit
 
 import (
 	"bufio"
