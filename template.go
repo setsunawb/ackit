@@ -12,18 +12,64 @@ import (
 )
 
 type input struct {
-	
+	// Enter input fields
 }
 
 type output struct {
-	
+	// Enter output fields
 }
 
 func solve(in input) output {
-	
+	// Enter your solution
+	return output{}
 }
 
-func in(fs []string, rv reflect.Value, nums []int) ([]string, error) {
+func sizeSlice(rt reflect.Type, lps []int, p int) (size []int) {
+	fsc, lsc := 0, 0
+	for i, lp := range lps {
+		if p < lp {
+			fsc = lp - p
+			lsc = len(lps) - i - 1
+			break
+		}
+	}
+	if fsc <= 0 || lsc <= 0 {
+		log.Panicf("sizeSlice: illegal args lps [%v], p [%v]", lps, p)
+	}
+	et := rt.Elem()
+	if et.Kind() == reflect.Slice {
+		size = append([]int{lsc}, sizeSlice(et, lps, p)...)
+	} else {
+		size = []int{fsc}
+	}
+	return
+}
+
+func size(rv reflect.Value, ft reflect.StructField, lps []int, p int) (size []int) {
+	sizeTag := ft.Tag.Get("size")
+	if sizeTag == "" {
+		if ft.Type.Kind() == reflect.Slice {
+			size = sizeSlice(ft.Type, lps, p)
+		} else {
+			size = []int{1}
+		}
+	} else {
+		for _, sizeStr := range strings.Split(sizeTag, ",") {
+			n, err := strconv.Atoi(sizeStr)
+			if err != nil {
+				sf := rv.FieldByName(sizeStr)
+				n = int(sf.Int())
+			}
+			if n <= 0 {
+				log.Panicf("size: got an incorrect number of fields. n [%v]", n)
+			}
+			size = append(size, n)
+		}
+	}
+	return
+}
+
+func in(fs []string, rv reflect.Value, size []int) ([]string, error) {
 	switch rv.Kind() {
 	case reflect.Int:
 		i, err := strconv.Atoi(fs[0])
@@ -37,11 +83,11 @@ func in(fs []string, rv reflect.Value, nums []int) ([]string, error) {
 		return fs[1:], nil
 	case reflect.Slice:
 		var err error
-		num := nums[0]
-		sl := reflect.MakeSlice(rv.Type(), num, num)
-		for i := 0; i < num; i++ {
+		n := size[0]
+		sl := reflect.MakeSlice(rv.Type(), n, n)
+		for i := 0; i < n; i++ {
 			elem := (reflect.New(rv.Type().Elem())).Elem()
-			fs, err = in(fs, elem, nums[1:])
+			fs, err = in(fs, elem, size[1:])
 			if err != nil {
 				return []string{}, err
 			}
@@ -54,39 +100,10 @@ func in(fs []string, rv reflect.Value, nums []int) ([]string, error) {
 	}
 }
 
-func nums(rv reflect.Value, ft reflect.StructField, lps []int, p int) (nums []int) {
-	numTag := ft.Tag.Get("num")
-	if numTag == "" {
-		if ft.Type.Kind() == reflect.Slice {
-			for _, lp := range lps {
-				if p < lp {
-					return []int{lp - p}
-				}
-			}
-			log.Panicf("nums: illegal args lps [%v], p [%v]", lps, p)
-		} else {
-			nums = []int{1}
-		}
-	} else {
-		for _, numStr := range strings.Split(numTag, ",") {
-			num, err := strconv.Atoi(numStr)
-			if err != nil {
-				numField := rv.FieldByName(numStr)
-				num = int(numField.Int())
-			}
-			if num <= 0 {
-				log.Panicf("nums: got an incorrect number of fields. num [%v]", num)
-			}
-			nums = append(nums, num)
-		}
-	}
-	return
-}
-
 func deserialize(s []string) (i input) {
 	rt := reflect.TypeOf(input{})
 	rv := reflect.Indirect(reflect.ValueOf(&i))
-	nf := rt.NumField()
+	n := rt.NumField()
 	var (
 		fs  []string
 		lps []int
@@ -98,14 +115,15 @@ func deserialize(s []string) (i input) {
 		fs = append(fs, lfs...)
 		lps = append(lps, len(fs))
 	}
-	for l := 0; l < nf; l++ {
+	for l := 0; l < n; l++ {
 		ft := rt.Field(l)
 		fv := rv.Field(l)
-		nums := nums(rv, ft, lps, p)
-		for _, n := range nums {
+		size := size(rv, ft, lps, p)
+		log.Printf("lps: %v, size: %v, p: %v", lps, size, p)
+		for _, n := range size {
 			p += n
 		}
-		fs, err = in(fs, fv, nums)
+		fs, err = in(fs, fv, size)
 		if err != nil {
 			log.Panicf("deserialize: %v", err)
 		}
@@ -142,9 +160,9 @@ func out(v reflect.Value) (string, error) {
 func (o output) serialize() string {
 	rt := reflect.TypeOf(o)
 	rv := reflect.ValueOf(o)
-	nf := rt.NumField()
+	n := rt.NumField()
 	var sb strings.Builder
-	for i := 0; i < nf; i++ {
+	for i := 0; i < n; i++ {
 		ft := rt.Field(i)
 		fv := rv.Field(i)
 		o, err := out(fv)
@@ -152,7 +170,7 @@ func (o output) serialize() string {
 			log.Panicf("serialize: %v", err)
 		}
 		sb.WriteString(o)
-		if i == nf-1 {
+		if i == n-1 {
 			sb.WriteByte('\n')
 		} else {
 			if ft.Tag.Get("EOL") == "true" {
@@ -178,12 +196,10 @@ func readLine(r *bufio.Reader) ([]byte, error) {
 		err      error
 		line, ln []byte
 	)
-
 	for isPrefix && err == nil {
 		line, isPrefix, err = r.ReadLine()
 		ln = append(ln, line...)
 	}
-
 	return ln, err
 }
 
@@ -191,10 +207,8 @@ func main() {
 	r := bufio.NewReader(os.Stdin)
 	w := bufio.NewWriter(os.Stdout)
 	var lines []string
-
 	for {
 		b, err := readLine(r)
-
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -202,12 +216,10 @@ func main() {
 			log.Panicln(err)
 		}
 		lines = append(lines, string(b))
-
 		if string(b) == "" {
 			break
 		}
 	}
-
 	_, err := w.WriteString(interact(lines))
 	if err != nil {
 		log.Panicln(err)
