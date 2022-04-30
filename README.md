@@ -29,7 +29,7 @@ T<sub>2,2</sub>&#009;T<sub>2,3</sub>&#009;T<sub>2,3</sub>
 S
 X&#009;Y&#009;Z
 </pre>
-The values of T and S are integers and strings, respectively.
+The values of T<sub>i,j</sub>, X, Y and Z are integers, and the value of S is a string.
 
 
 1. Set the input and output structure of template.go
@@ -43,11 +43,10 @@ The values of T and S are integers and strings, respectively.
     }
     
     type output struct {
-        T [][]int
-        S string
-        X int `EOL:"false"`
-        Y int `EOL:"false"`
-        Z int
+        T    [][]int
+        S    string
+        X, Y int `EOL:"false"`
+        Z    int
     }
     ~~~
     also
@@ -59,12 +58,12 @@ The values of T and S are integers and strings, respectively.
     }
     
     type output struct {
-        T    [][]int
-        S    string
-        X, Y int `EOL:"false"`
-        Z    int 
+        T   [][]int
+        S   string
+        XYZ []int
     }
     ~~~
+    - Supported types are int, uint, float32, float64, string and slices up to 2 dimensions.
     - When inputting and outputting, the fields of each structure are read and written in the order in which they appear.
     - Each field must be exposed by starting with a capital letter.
     - Non-slice fields read the next element separated by a space or newline.
