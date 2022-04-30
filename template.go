@@ -20,7 +20,7 @@ type output struct {
 }
 
 func solve(in input) output {
-	// Enter your solution
+	// Implement your solution
 	return output{}
 }
 
@@ -72,11 +72,32 @@ func size(rv reflect.Value, ft reflect.StructField, lps []int, p int) (size []in
 func in(fs []string, rv reflect.Value, size []int) ([]string, error) {
 	switch rv.Kind() {
 	case reflect.Int:
-		i, err := strconv.Atoi(fs[0])
+		i, err := strconv.ParseInt(fs[0], 0, 0)
 		if err != nil {
 			return []string{}, err
 		}
-		rv.SetInt(int64(i))
+		rv.SetInt(i)
+		return fs[1:], nil
+	case reflect.Uint:
+		u, err := strconv.ParseUint(fs[0], 0, 0)
+		if err != nil {
+			return []string{}, err
+		}
+		rv.SetUint(u)
+		return fs[1:], nil
+	case reflect.Float32:
+		f, err := strconv.ParseFloat(fs[0], 32)
+		if err != nil {
+			return []string{}, err
+		}
+		rv.SetFloat(f)
+		return fs[1:], nil
+	case reflect.Float64:
+		f, err := strconv.ParseFloat(fs[0], 64)
+		if err != nil {
+			return []string{}, err
+		}
+		rv.SetFloat(f)
 		return fs[1:], nil
 	case reflect.String:
 		rv.SetString(fs[0])
@@ -131,29 +152,38 @@ func deserialize(s []string) (i input) {
 	return
 }
 
-func out(v reflect.Value) (string, error) {
-	switch v.Kind() {
+func out(rv reflect.Value) (string, error) {
+	switch rv.Kind() {
 	case reflect.Int:
-		return fmt.Sprint(v.Int()), nil
+		return fmt.Sprint(rv.Int()), nil
+	case reflect.Uint:
+		return fmt.Sprint(rv.Uint()), nil
+	case reflect.Float32:
+		return fmt.Sprint(float32(rv.Float())), nil
+	case reflect.Float64:
+		return fmt.Sprint(rv.Float()), nil
 	case reflect.String:
-		return v.String(), nil
+		return rv.String(), nil
 	case reflect.Slice:
 		var sb strings.Builder
-		for i := 0; i < v.Len(); i++ {
-			o, err := out(v)
+		l := rv.Len()
+		for i := 0; i < l; i++ {
+			o, err := out(rv.Index(i))
 			if err != nil {
 				return "", err
 			}
 			sb.WriteString(o)
-			if v.Elem().Kind() == reflect.Slice {
-				sb.WriteByte('\n')
-			} else {
-				sb.WriteByte(' ')
+			if i < l-1 {
+				if rv.Type().Elem().Kind() == reflect.Slice {
+					sb.WriteByte('\n')
+				} else {
+					sb.WriteByte(' ')
+				}
 			}
 		}
 		return sb.String(), nil
 	default:
-		return "", fmt.Errorf("out: cannot out reflect.value [%v]", v)
+		return "", fmt.Errorf("out: not supported kind [%v], value [%v]", rv.Kind(), rv)
 	}
 }
 
@@ -173,10 +203,10 @@ func (o output) serialize() string {
 		if i == n-1 {
 			sb.WriteByte('\n')
 		} else {
-			if ft.Tag.Get("EOL") == "true" {
-				sb.WriteByte('\n')
-			} else {
+			if ft.Tag.Get("EOL") == "false" {
 				sb.WriteByte(' ')
+			} else {
+				sb.WriteByte('\n')
 			}
 		}
 	}

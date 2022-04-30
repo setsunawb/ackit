@@ -27,6 +27,7 @@ Output<br>
 T<sub>1,1</sub>&#009;T<sub>1,2</sub>&#009;T<sub>1,3</sub>
 T<sub>2,2</sub>&#009;T<sub>2,3</sub>&#009;T<sub>2,3</sub>
 S
+X&#009;Y&#009;Z
 </pre>
 The values of T and S are integers and strings, respectively.
 
@@ -42,8 +43,11 @@ The values of T and S are integers and strings, respectively.
     }
     
     type output struct {
-        T [][]int `newline:"true"`
+        T [][]int
         S string
+        X int `EOL:"false"`
+        Y int `EOL:"false"`
+        Z int
     }
     ~~~
     also
@@ -55,15 +59,17 @@ The values of T and S are integers and strings, respectively.
     }
     
     type output struct {
-        T [][]int
-        S string
+        T    [][]int
+        S    string
+        X, Y int `EOL:"false"`
+        Z    int 
     }
     ~~~
     - When inputting and outputting, the fields of each structure are read and written in the order in which they appear.
     - Each field must be exposed by starting with a capital letter.
     - Non-slice fields read the next element separated by a space or newline.
     - Slice fields are read to the next newline by default. You can also specify the size explicitly with the `size` tag. If the slices are nested, specify the value of the `size` tag as a comma-separated list.
-    - The `newline` tag can be used to specify the position of line breaks in the output.
+    - By default, each field in the output structure is separated by a newline. This can be changed to be separated by a space from the field immediately following by specifying `false` in the `EOL` tag.
 
 1. Coding the solution to the problem in the solve function of template.go.
     ~~~go
