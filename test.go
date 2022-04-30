@@ -1,4 +1,4 @@
-package ackit
+package main
 
 import (
 	"bufio"
