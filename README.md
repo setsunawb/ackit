@@ -34,34 +34,38 @@ The values of T<sub>i,j</sub>, X, Y and Z are integers, and the value of S is a 
 
 1. Set the input and output structure of template.go
     ~~~go
-    type input struct {
-        N int
-        M int
-        A []int   `size:"N"`
-        B []int   `size:"M"`
-        C [][]int `size:"N,M"`
-    }
+    type (
+        input struct {
+            N int
+            M int
+            A []int   `size:"N"`
+            B []int   `size:"M"`
+            C [][]int `size:"N,M"`
+        }
     
-    type output struct {
-        T    [][]int
-        S    string
-        X, Y int `EOL:"false"`
-        Z    int
-    }
+        output struct {
+            T    [][]int
+            S    string
+            X, Y int `EOL:"false"`
+            Z    int
+        }
+    )
     ~~~
     also
     ~~~go
-    type input struct {
-        N, M int
-        A, B []int
-        C    [][]int
-    }
+    type (
+        input struct {
+            N, M int
+            A, B []int
+            C    [][]int
+        }
     
-    type output struct {
-        T   [][]int
-        S   string
-        XYZ []int
-    }
+        output struct {
+            T   [][]int
+            S   string
+            XYZ []int
+        }
+    )
     ~~~
     - Supported types are int, uint, float32, float64, string and slices up to 2 dimensions.
     - When inputting and outputting, the fields of each structure are read and written in the order in which they appear.

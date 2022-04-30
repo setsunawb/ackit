@@ -11,13 +11,15 @@ import (
 	"strings"
 )
 
-type input struct {
-	// Enter input fields
-}
+type (
+	input struct {
+		// Enter input fields
+	}
 
-type output struct {
-	// Enter output fields
-}
+	output struct {
+		// Enter output fields
+	}
+)
 
 func solve(in input) output {
 	// Implement your solution
@@ -140,7 +142,6 @@ func deserialize(s []string) (i input) {
 		ft := rt.Field(l)
 		fv := rv.Field(l)
 		size := size(rv, ft, lps, p)
-		log.Printf("lps: %v, size: %v, p: %v", lps, size, p)
 		for _, n := range size {
 			p += n
 		}
